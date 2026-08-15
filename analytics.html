@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analytics - Expense Tracker</title>
+
+<!-- Bootstrap CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<style>
+  body {
+    background-color: #f4f6f9;
+  }
+
+  /* Navbar */
+  .navbar-blue {
+    background-color: #0d47a1;
+  }
+  .navbar-blue .nav-link {
+    color: #e3f2fd !important;
+    font-weight: 500;
+  }
+  .navbar-blue .nav-link:hover,
+  .navbar-blue .nav-link.active {
+    color: #ffffff !important;
+  }
+  .navbar-blue .navbar-brand {
+    color: #ffffff !important;
+    font-weight: 700;
+  }
+  #logoutBtn {
+    color: #ffffff;
+    border: 1px solid rgba(255,255,255,0.6);
+  }
+  #logoutBtn:hover {
+    background-color: #ffffff;
+    color: #0d47a1;
+  }
+
+  /* Section cards */
+  .section-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 28px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  }
+  .section-title {
+    font-weight: 700;
+    color: #0d47a1;
+    margin-bottom: 18px;
+    border-left: 4px solid #0d47a1;
+    padding-left: 10px;
+  }
+
+  /* Key analytics cards */
+  .stat-card {
+    border-radius: 10px;
+    color: #fff;
+    padding: 18px;
+    height: 100%;
+  }
+  .stat-card h6 {
+    opacity: 0.85;
+    margin-bottom: 6px;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .stat-card .value {
+    font-size: 1.6rem;
+    font-weight: 700;
+  }
+  .bg-avg { background: linear-gradient(135deg,#1976d2,#42a5f5); }
+  .bg-count { background: linear-gradient(135deg,#388e3c,#66bb6a); }
+  .bg-max { background: linear-gradient(135deg,#ef6c00,#ffa726); }
+  .bg-sum { background: linear-gradient(135deg,#6a1b9a,#ab47bc); }
+
+  .cat-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+  }
+  .cat-progress {
+    height: 18px;
+    border-radius: 8px;
+  }
+  .cat-row {
+    margin-bottom: 14px;
+  }
+
+  .loading-text {
+    color: #888;
+    font-style: italic;
+  }
+  .error-text {
+    color: #c62828;
+  }
+  .nothing-found {
+    color: #999;
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg navbar-blue">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="analytics.html">
+      <i class="bi bi-wallet2"></i> Expense Tracker
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navContent">
+      <div class="d-flex flex-wrap gap-2 ms-lg-auto align-items-center">
+        <a href="dashboard.html" class="btn btn-light text-primary">
+          <i class="bi bi-speedometer2"></i> Dashboard
+        </a>
+        <a href="expense.html" class="btn btn-light text-primary">
+          <i class="bi bi-receipt"></i> Expense
+        </a>
+        <a href="budget.html" class="btn btn-light text-primary">
+          <i class="bi bi-piggy-bank"></i> Budget
+        </a>
+        <a href="category.html" class="btn btn-light text-primary">
+          <i class="bi bi-tags"></i> Category
+        </a>
+        
+        <button id="logoutBtn" class="btn btn-outline-light">
+          <i class="bi bi-box-arrow-right"></i> Logout
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="container my-4">
+
+  <!-- 1. KEY ANALYTICS -->
+  <div class="section-card">
+    <div class="section-title">Key Analytics</div>
+    <div id="keyAnalyticsContainer" class="row g-3">
+      <div class="loading-text">Loading key analytics...</div>
+    </div>
+  </div>
+
+  <!-- 2. MONTHLY EXPENSES -->
+  <div class="section-card">
+    <div class="section-title">Monthly Expenses</div>
+    <div id="monthlyExpensesContainer">
+      <div class="loading-text">Loading monthly expenses...</div>
+    </div>
+  </div>
+
+  <!-- 3. CATEGORY WISE EXPENSE -->
+  <div class="section-card">
+    <div class="section-title">Category Wise Expense</div>
+
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+      <label class="fw-semibold me-2 mb-0">Time Range:</label>
+      <select id="categoryRangeSelect" class="form-select form-select-sm" style="width:auto;">
+        <option value="all" selected>All Time (Default)</option>
+        <option value="1">Last 1 Month</option>
+        <option value="3">Last 3 Months</option>
+        <option value="6">Last 6 Months</option>
+        <option value="12">Last 1 Year</option>
+        <option value="24">Last 2 Years</option>
+      </select>
+      <button id="categoryRangeBtn" class="btn btn-primary btn-sm">Apply</button>
+    </div>
+
+    <div id="categoryWiseContainer">
+      <div class="loading-text">Loading category wise expense...</div>
+    </div>
+  </div>
+
+  <!-- 4. MONTH BUDGET VS EXPENSE COMPARISON -->
+  <div class="section-card">
+    <div class="section-title">Monthly Budget vs Spent</div>
+    <div id="budgetComparisonContainer">
+      <div class="loading-text">Loading budget comparison...</div>
+    </div>
+  </div>
+
+  <!-- 5. TOP 5 CATEGORIES -->
+  <div class="section-card">
+    <div class="section-title">Top 5 Categories</div>
+
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+      <label class="fw-semibold me-2 mb-0">Select Range:</label>
+      <select id="topFiveRangeSelect" class="form-select form-select-sm" style="width:auto;">
+        <option value="" selected disabled>-- Choose a range --</option>
+        <option value="1">Last 1 Month</option>
+        <option value="3">Last 3 Months</option>
+        <option value="6">Last 6 Months</option>
+        <option value="12">Last 1 Year</option>
+        <option value="24">Last 2 Years</option>
+      </select>
+      <button id="topFiveBtn" class="btn btn-primary btn-sm">Show Top 5</button>
+    </div>
+
+    <div id="topFiveContainer">
+      <div class="nothing-found">Select a range above and click "Show Top 5" to view data.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+const BASE_URL = "http://localhost:3000";
+const token = localStorage.getItem("token");
+
+const monthNames = ["", "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"];
+
+let categoriesCache = null; // cache category list
+
+/* ---------------- LOGOUT ---------------- */
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  localStorage.removeItem("token");
+  window.location.href = "login.html";
+});
+
+/* ---------------- GENERIC AUTH FETCH ---------------- */
+async function authFetch(url) {
+  const res = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  });
+
+  if (res.status === 401) {
+    localStorage.removeItem("token");
+    window.location.href = "login.html";
+    return null;
+  }
+
+  if (!res.ok) {
+    throw new Error(`Request failed with status ${res.status}`);
+  }
+
+  return res.json();
+}
+
+/* ---------------- HELPERS ---------------- */
+function formatCurrency(val) {
+  const num = Number(val);
+  if (isNaN(num)) return "0";
+  return num.toLocaleString("en-IN");
+}
+
+// compute {month, year} that is "monthsBack" months before today
+function getPastMonthYear(monthsBack) {
+  const now = new Date();
+  now.setDate(1); // avoid month-overflow edge cases
+  now.setMonth(now.getMonth() - Number(monthsBack));
+  return { month: now.getMonth() + 1, year: now.getFullYear() };
+}
+
+async function getCategories() {
+  if (categoriesCache) return categoriesCache;
+  try {
+    const data = await authFetch(`${BASE_URL}/category/all`);
+    categoriesCache = Array.isArray(data) ? data : (data?.categories || []);
+  } catch (e) {
+    console.error("Failed to load categories", e);
+    categoriesCache = [];
+  }
+  return categoriesCache;
+}
+
+function getCategoryName(catId, categories) {
+  const match = categories.find(c =>
+    String(c.id) === String(catId) ||
+    String(c.cat_id) === String(catId) ||
+    String(c.category_id) === String(catId)
+  );
+  if (!match) return `Category #${catId}`;
+  return match.name || match.category_name || match.title || `Category #${catId}`;
+}
+
+/* ================= 1. KEY ANALYTICS ================= */
+async function loadKeyAnalytics() {
+  const container = document.getElementById("keyAnalyticsContainer");
+  try {
+    let data = await fetch(`${BASE_URL}/expense/keyanalytics`,{
+    method: "GET",
+    headers: {
+        "Authorization": `Bearer ${token}`
+    }
+
+});
+data= await data.json();
+    
+    if (!data) return;
+
+    const avg = data._avg?.amount ?? 0;
+    const count = data._count?.id ?? 0;
+    const max = data._max?.amount ?? 0;
+    const sum = data._sum?.amount ?? 0;
+
+    container.innerHTML = `
+      <div class="col-6 col-md-3">
+        <div class="stat-card bg-avg">
+          <h6>Average Expense</h6>
+          <div class="value">Rs. ${formatCurrency(avg)}</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card bg-count">
+          <h6>Total Entries</h6>
+          <div class="value">${count}</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card bg-max">
+          <h6>Max Expense</h6>
+          <div class="value">Rs. ${formatCurrency(max)}</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card bg-sum">
+          <h6>Total Spent</h6>
+          <div class="value">Rs. ${formatCurrency(sum)}</div>
+        </div>
+      </div>
+    `;
+  } catch (e) {
+    console.error(e);
+    container.innerHTML = `<div class="error-text">Failed to load key analytics.</div>`;
+  }
+}
+
+/* ================= 2. MONTHLY EXPENSES ================= */
+async function loadMonthlyExpenses() {
+  const container = document.getElementById("monthlyExpensesContainer");
+  try {
+    const data = await authFetch(`${BASE_URL}/expense/monthlyexpenses`);
+    if (!data) return;
+
+    if (!Array.isArray(data) || data.length === 0) {
+      container.innerHTML = `<div class="nothing-found">Nothing found</div>`;
+      return;
+    }
+
+    let rows = data.map(item => `
+      <tr>
+        <td>${monthNames[Number(item.month)] || item.month}</td>
+        <td>${item.year}</td>
+        <td class="fw-semibold">Rs. ${formatCurrency(item.total)}</td>
+      </tr>
+    `).join("");
+
+    container.innerHTML = `
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Month</th>
+              <th>Year</th>
+              <th>Total Expense</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    `;
+  } catch (e) {
+    console.error(e);
+    container.innerHTML = `<div class="error-text">Failed to load monthly expenses.</div>`;
+  }
+}
+
+/* ================= 3. CATEGORY WISE EXPENSE ================= */
+async function loadCategoryWise(monthsBack) {
+  const container = document.getElementById("categoryWiseContainer");
+  container.innerHTML = `<div class="loading-text">Loading category wise expense...</div>`;
+
+  try {
+    let url = `${BASE_URL}/expense/categoryWise`;
+
+    if (monthsBack && monthsBack !== "all") {
+      const { month, year } = getPastMonthYear(monthsBack);
+      url = `${BASE_URL}/expense/categoryWiseRange?month=${month}&year=${year}`;
+    }
+
+    const [data, categories] = await Promise.all([authFetch(url), getCategories()]);
+    if (!data) return;
+
+    if (!Array.isArray(data) || data.length === 0) {
+      container.innerHTML = `<div class="nothing-found">Nothing found</div>`;
+      return;
+    }
+
+    const maxVal = Math.max(...data.map(d => Number(d._sum?.amount || 0)));
+
+    let html = data.map(item => {
+      const amount = Number(item._sum?.amount || 0);
+      const name = getCategoryName(item.cat_id, categories);
+      const percent = maxVal > 0 ? Math.round((amount / maxVal) * 100) : 0;
+      return `
+        <div class="cat-row">
+          <div class="cat-bar-label">
+            <span>${name}</span>
+            <span class="fw-semibold">Rs. ${formatCurrency(amount)}</span>
+          </div>
+          <div class="progress cat-progress">
+            <div class="progress-bar bg-primary" role="progressbar" style="width:${percent}%"></div>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    container.innerHTML = html;
+  } catch (e) {
+    console.error(e);
+    container.innerHTML = `<div class="error-text">Failed to load category wise expense.</div>`;
+  }
+}
+
+document.getElementById("categoryRangeBtn").addEventListener("click", () => {
+  const val = document.getElementById("categoryRangeSelect").value;
+  loadCategoryWise(val);
+});
+
+/* ================= 4. BUDGET VS EXPENSE COMPARISON ================= */
+function getExpenseAmount(e) {
+  if (e.sum !== undefined) return e.sum;
+  if (e.total !== undefined) return e.total;
+  if (e.amount !== undefined) return e.amount;
+  if (e._sum?.amount !== undefined) return e._sum.amount;
+  return null;
+}
+
+async function loadBudgetComparison() {
+  const container = document.getElementById("budgetComparisonContainer");
+  try {
+    const data = await authFetch(`${BASE_URL}/expense/expense-budget`);
+    if (!data) return;
+    console.log(data)
+    const budgetList = Array.isArray(data.Budget) ? data.Budget : [];
+    const expenseList = Array.isArray(data.Expenses) ? data.Expenses : [];
+
+    if (budgetList.length === 0 && expenseList.length === 0) {
+      container.innerHTML = `<div class="nothing-found">Nothing found</div>`;
+      return;
+    }
+
+    // build a unique set of month-year keys from both lists
+    const keysMap = new Map();
+
+    budgetList.forEach(b => {
+      const key = `${b.year}-${b.month}`;
+      if (!keysMap.has(key)) keysMap.set(key, { month: b.month, year: b.year });
+    });
+    expenseList.forEach(e => {
+      const key = `${e.year}-${e.month}`;
+      if (!keysMap.has(key)) keysMap.set(key, { month: e.month, year: e.year });
+    });
+
+    let rows = "";
+    keysMap.forEach(({ month, year }) => {
+      const budgetEntry = budgetList.find(b => String(b.month) === String(month) && String(b.year) === String(year));
+      const expenseEntry = expenseList.find(e => String(e.month) === String(month) && String(e.year) === String(year));
+      
+
+      const budgetVal = budgetEntry ? `Rs. ${formatCurrency(budgetEntry.budget_amount)}` : `<span class="nothing-found">Nothing found</span>`;
+      const expenseVal = expenseEntry ? `Rs. ${formatCurrency(getExpenseAmount(expenseEntry))}` : `<span class="nothing-found">Nothing found</span>`;
+
+      let statusBadge = "";
+      if (budgetEntry && expenseEntry) {
+        const spent = Number(getExpenseAmount(expenseEntry));
+        const budget = Number(budgetEntry.budget_amount);
+        if (spent > budget) {
+          statusBadge = `<span class="badge bg-danger">Over Budget</span>`;
+        } else {
+          statusBadge = `<span class="badge bg-success">Within Budget</span>`;
+        }
+      } else {
+        statusBadge = `<span class="badge bg-secondary">Incomplete Data</span>`;
+      }
+
+      rows += `
+        <tr>
+          <td>${monthNames[Number(month)] || month}</td>
+          <td>${year}</td>
+          <td>${budgetVal}</td>
+          <td>${expenseVal}</td>
+          <td>${statusBadge}</td>
+        </tr>
+      `;
+    });
+
+    container.innerHTML = `
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Month</th>
+              <th>Year</th>
+              <th>Budget</th>
+              <th>Spent</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    `;
+  } catch (e) {
+    console.error(e);
+    container.innerHTML = `<div class="error-text">Failed to load budget comparison.</div>`;
+  }
+}
+
+/* ================= 5. TOP 5 CATEGORIES ================= */
+async function loadTopFive(monthsBack) {
+  const container = document.getElementById("topFiveContainer");
+  container.innerHTML = `<div class="loading-text">Loading top 5 categories...</div>`;
+
+  try {
+    const { month, year } = getPastMonthYear(monthsBack);
+    const url = `${BASE_URL}/expense/topfive?month=${month}&year=${year}`;
+
+    const [data, categories] = await Promise.all([authFetch(url), getCategories()]);
+    if (!data) return;
+
+    if (!Array.isArray(data) || data.length === 0) {
+      container.innerHTML = `<div class="nothing-found">Nothing found</div>`;
+      return;
+    }
+
+    // sort descending by amount, just in case
+    const sorted = [...data].sort((a, b) => Number(b._sum?.amount || 0) - Number(a._sum?.amount || 0));
+    const maxVal = Math.max(...sorted.map(d => Number(d._sum?.amount || 0)));
+
+    const barColors = ["bg-primary", "bg-success", "bg-warning", "bg-danger", "bg-info"];
+
+    let html = sorted.map((item, idx) => {
+      const amount = Number(item._sum?.amount || 0);
+      const name = getCategoryName(item.cat_id, categories);
+      const percent = maxVal > 0 ? Math.round((amount / maxVal) * 100) : 0;
+      return `
+        <div class="cat-row">
+          <div class="cat-bar-label">
+            <span>#${idx + 1} ${name}</span>
+            <span class="fw-semibold">Rs. ${formatCurrency(amount)}</span>
+          </div>
+          <div class="progress cat-progress">
+            <div class="progress-bar ${barColors[idx % barColors.length]}" role="progressbar" style="width:${percent}%"></div>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    container.innerHTML = html;
+  } catch (e) {
+    console.error(e);
+    container.innerHTML = `<div class="error-text">Failed to load top 5 categories.</div>`;
+  }
+}
+
+document.getElementById("topFiveBtn").addEventListener("click", () => {
+  const val = document.getElementById("topFiveRangeSelect").value;
+  if (!val) {
+    document.getElementById("topFiveContainer").innerHTML =
+      `<div class="nothing-found">Please select a range first.</div>`;
+    return;
+  }
+  loadTopFive(val);
+});
+
+/* ================= INIT ================= */
+window.addEventListener("DOMContentLoaded", () => {
+  if (!token) {
+    window.location.href = "login.html";
+    return;
+  }
+  loadKeyAnalytics();
+  loadMonthlyExpenses();
+  loadCategoryWise("all");
+  loadBudgetComparison();
+});
+</script>
+
+</body>
+</html>
